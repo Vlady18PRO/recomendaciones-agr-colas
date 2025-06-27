@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recomendaciones Agrícolas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-6">
+    <h1 class="text-3xl font-bold text-center mb-6">Recomendaciones Agrícolas</h1>
+    <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
+      <form id="farmForm" onsubmit="handleSubmit(event)">
+        <div class="mb-4">
+          <label for="crop" class="block text-gray-700">Tipo de Cultivo</label>
+          <select id="crop" class="w-full p-2 border rounded" required>
+            <option value="">Selecciona un cultivo</option>
+            <option value="maiz">Maíz</option>
+            <option value="trigo">Trigo</option>
+            <option value="frijol">Frijol</option>
+            <option value="tomate">Tomate</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="size" class="block text-gray-700">Tamaño del Terreno (hectáreas)</label>
+          <input type="number" id="size" step="0.1" min="0.1" class="w-full p-2 border rounded" required>
+        </div>
+        <div class="mb-4">
+          <label for="year" class="block text-gray-700">Año de Siembra</label>
+          <input type="number" id="year" min="2000" max="2025" class="w-full p-2 border rounded" required>
+        </div>
+        <div class="mb-4">
+          <label for="location" class="block text-gray-700">Ubicación</label>
+          <input type="text" id="location" class="w-full p-2 border rounded" placeholder="Ej: Bogotá, Colombia" required>
+        </div>
+        <button type="submit" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">Obtener Recomendaciones</button>
+      </form>
+      <div id="recommendations" class="mt-6 hidden">
+        <h2 class="text-2xl font-semibold mb-4">Recomendaciones</h2>
+        <div id="recContent" class="text-gray-700"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    function handleSubmit(event) {
+      event.preventDefault();
+      const crop = document.getElementById('crop').value;
+      const size = parseFloat(document.getElementById('size').value);
+      const year = parseInt(document.getElementById('year').value);
+      const location = document.getElementById('location').value;
+      
+      const recommendations = generateRecommendations(crop, size, year, location);
+      const recDiv = document.getElementById('recommendations');
+      const recContent = document.getElementById('recContent');
+      recContent.innerHTML = recommendations;
+      recDiv.classList.remove('hidden');
+    }
+
+    function generateRecommendations(crop, size, year, location) {
+      let recs = `<p><strong>Cultivo:</strong> ${crop.charAt(0).toUpperCase() + crop.slice(1)}</p>`;
+      recs += `<p><strong>Tamaño:</strong> ${size} hectáreas</p>`;
+      recs += `<p><strong>Año:</strong> ${year}</p>`;
+      recs += `<p><strong>Ubicación:</strong> ${location}</p>`;
+      recs += '<h3 class="text-xl font-semibold mt-4">Recomendaciones:</h3>';
+      
+      switch(crop) {
+        case 'maiz':
+          recs += `<p>- <strong>Temperatura ideal:</strong> 20-30°C. Asegúrate de sembrar en primavera para evitar heladas.</p>`;
+          recs += `<p>- <strong>Época de siembra:</strong> Marzo-Mayo en ${location} (ajusta según clima local).</p>`;
+          recs += `<p>- <strong>Riego:</strong> Mantén el suelo húmedo, especialmente en floración.</p>`;
+          recs += `<p>- <strong>Espaciamiento:</strong> 75 cm entre hileras y 25 cm entre plantas para ${size} hectáreas.</p>`;
+          break;
+        case 'trigo':
+          recs += `<p>- <strong>Temperatura ideal:</strong> 15-25°C. Prefiere climas frescos.</p>`;
+          recs += `<p>- <strong>Época de siembra:</strong> Octubre-Noviembre en ${location}.</p>`;
+          recs += `<p>- <strong>Riego:</strong> Moderado, evita encharcamientos.</p>`;
+          recs += `<p>- <strong>Espaciamiento:</strong> 20 cm entre hileras para ${size} hectáreas.</p>`;
+          break;
+        case 'frijol':
+          recs += `<p>- <strong>Temperatura ideal:</strong> 18-25°C. Evita temperaturas extremas.</p>`;
+          recs += `<p>- <strong>Época de siembra:</strong> Abril-Junio en ${location}.</p>`;
+          recs += `<p>- <strong>Riego:</strong> Regular, especialmente durante la formación de vainas.</p>`;
+          recs += `<p>- <strong>Espaciamiento:</strong> 50 cm entre hileras y 10 cm entre plantas.</p>`;
+          break;
+        case 'tomate':
+          recs += `<p>- <strong>Temperatura ideal:</strong> 20-27°C. Protege de heladas.</p>`;
+          recs += `<p>- <strong>Época de siembra:</strong> Febrero-Abril en ${location}.</p>`;
+          recs += `<p>- <strong>Riego:</strong> Constante pero sin encharcar.</p>`;
+          recs += `<p>- <strong>Espaciamiento:</strong> 60 cm entre plantas para ${size} hectáreas.</p>`;
+          break;
+        default:
+          recs += `<p>No hay recomendaciones específicas para este cultivo.</p>`;
+      }
+      recs += `<p><strong>Nota:</strong> Las recomendaciones son generales. Consulta con un agrónomo local en ${location} para detalles específicos.</p>`;
+      return recs;
+    }
+  </script>
+</body>
+</html>
