@@ -9,76 +9,89 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
     body {
-      background-image: url('activos/fondo.png');
-      background-size: cover;
+      background: linear-gradient(135deg, #4CAF50, #FFD700); /* Degradado verde a amarillo */
       background-attachment: fixed;
-      background-position: center;
+      margin: 0;
+      font-family: 'Arial', sans-serif;
     }
-    #map { height: 300px; width: 100%; }
-    .container { background-color: rgba(255, 255, 255, 0.9); }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.85); /* Blanco semitransparente */
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    #map { height: 250px; width: 100%; margin: 15px 0; }
+    .form-grid { display: grid; gap: 15px; grid-template-columns: 1fr 1fr; }
+    .full-width { grid-column: span 2; }
+    #predictions { margin-top: 20px; padding-top: 15px; border-top: 1px solid #4CAF50; }
+    h1 { color: #2E7D32; }
+    h2, h3, h4 { color: #FFD700; }
+    p, li { font-size: 1.1em; line-height: 1.6; }
   </style>
 </head>
-<body class="font-sans">
-  <div class="container mx-auto p-6">
+<body>
+  <div class="container">
     <div class="text-center mb-6">
-      <img src="activos/ESPOCH.png" alt="Logo ESPOCH" class="mx-auto h-24">
-      <h1 class="text-4xl font-bold text-green-800">Agroweb</h1>
-      <p class="text-lg text-gray-700">Predicciones Agrícolas - Escuela Superior Politécnica de Chimborazo</p>
+      <img src="activos/ESPOCH.png" alt="Logo ESPOCH" class="mx-auto h-28 mb-4">
+      <h1 class="text-4xl font-bold">Agroweb</h1>
+      <p class="text-lg text-gray-800">Predicciones Agrícolas - Escuela Superior Politécnica de Chimborazo</p>
       <p class="text-md text-gray-600">Facultad de Mecánica</p>
     </div>
-    <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
-      <form id="farmForm" onsubmit="handleSubmit(event)">
-        <div class="mb-4">
-          <label for="crop" class="block text-gray-700">Tipo de Cultivo</label>
-          <input type="text" id="crop" class="w-full p-2 border rounded" placeholder="Ej: Maíz, Trigo" required>
-        </div>
-        <div class="mb-4">
-          <label for="size" class="block text-gray-700">Tamaño del Terreno (hectáreas)</label>
-          <input type="number" id="size" step="0.1" min="0.1" class="w-full p-2 border rounded" required>
-        </div>
-        <div class="mb-4">
-          <label for="month" class="block text-gray-700">Mes de Siembra</label>
-          <select id="month" class="w-full p-2 border rounded" required>
-            <option value="">Selecciona un mes</option>
-            <option value="Enero">Enero</option>
-            <option value="Febrero">Febrero</option>
-            <option value="Marzo">Marzo</option>
-            <option value="Abril">Abril</option>
-            <option value="Mayo">Mayo</option>
-            <option value="Junio">Junio</option>
-            <option value="Julio">Julio</option>
-            <option value="Agosto">Agosto</option>
-            <option value="Septiembre">Septiembre</option>
-            <option value="Octubre">Octubre</option>
-            <option value="Noviembre">Noviembre</option>
-            <option value="Diciembre">Diciembre</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="year" class="block text-gray-700">Año de Siembra</label>
-          <input type="number" id="year" min="2026" max="2035" class="w-full p-2 border rounded" required>
-        </div>
-        <div class="mb-4">
-          <label for="irrigation" class="block text-gray-700">Tipo de Riego</label>
-          <select id="irrigation" class="w-full p-2 border rounded" required>
-            <option value="">Selecciona un tipo de riego</option>
-            <option value="goteo">Riego por goteo</option>
-            <option value="aspersión">Riego por aspersión</option>
-            <option value="gravedad">Riego por gravedad</option>
-            <option value="manual">Riego manual</option>
-          </select>
-        </div>
-        <div class="mb-4">
-          <label for="location" class="block text-gray-700">Ubicación (haz clic en el mapa)</label>
-          <input type="text" id="location" class="w-full p-2 border rounded" readonly placeholder="Coordenadas aparecerán aquí">
-          <div id="map" class="mt-2"></div>
-        </div>
-        <button type="submit" class="w-full bg-green-800 text-white p-2 rounded hover:bg-green-700">Obtener Predicciones</button>
-      </form>
-      <div id="predictions" class="mt-6 hidden">
-        <h2 class="text-2xl font-semibold mb-4">Predicciones</h2>
-        <div id="predContent" class="text-gray-700"></div>
+    <form id="farmForm" onsubmit="handleSubmit(event)" class="form-grid">
+      <div>
+        <label for="crop" class="block text-gray-700">Tipo de Cultivo</label>
+        <input type="text" id="crop" class="w-full p-2 border rounded" placeholder="Ej: Maíz, Trigo" required>
       </div>
+      <div>
+        <label for="size" class="block text-gray-700">Tamaño del Terreno (ha)</label>
+        <input type="number" id="size" step="0.1" min="0.1" class="w-full p-2 border rounded" required>
+      </div>
+      <div>
+        <label for="month" class="block text-gray-700">Mes de Siembra</label>
+        <select id="month" class="w-full p-2 border rounded" required>
+          <option value="">Selecciona un mes</option>
+          <option value="Enero">Enero</option>
+          <option value="Febrero">Febrero</option>
+          <option value="Marzo">Marzo</option>
+          <option value="Abril">Abril</option>
+          <option value="Mayo">Mayo</option>
+          <option value="Junio">Junio</option>
+          <option value="Julio">Julio</option>
+          <option value="Agosto">Agosto</option>
+          <option value="Septiembre">Septiembre</option>
+          <option value="Octubre">Octubre</option>
+          <option value="Noviembre">Noviembre</option>
+          <option value="Diciembre">Diciembre</option>
+        </select>
+      </div>
+      <div>
+        <label for="year" class="block text-gray-700">Año de Siembra</label>
+        <input type="number" id="year" min="2026" max="2035" class="w-full p-2 border rounded" required>
+      </div>
+      <div>
+        <label for="irrigation" class="block text-gray-700">Tipo de Riego</label>
+        <select id="irrigation" class="w-full p-2 border rounded" required>
+          <option value="">Selecciona un tipo de riego</option>
+          <option value="goteo">Riego por goteo</option>
+          <option value="aspersión">Riego por aspersión</option>
+          <option value="gravedad">Riego por gravedad</option>
+          <option value="manual">Riego manual</option>
+        </select>
+      </div>
+      <div class="full-width">
+        <label for="location" class="block text-gray-700">Ubicación (haz clic en el mapa)</label>
+        <input type="text" id="location" class="w-full p-2 border rounded" readonly placeholder="Coordenadas aparecerán aquí">
+        <div id="map" class="mt-2"></div>
+      </div>
+      <div class="full-width text-center">
+        <button type="submit" class="w-1/2 bg-green-700 text-white p-2 rounded hover:bg-green-600">Obtener Predicciones</button>
+      </div>
+    </form>
+    <div id="predictions" class="mt-6 hidden">
+      <h2 class="text-2xl font-semibold mb-4">Predicciones y Recomendaciones</h2>
+      <div id="predContent" class="text-gray-800"></div>
     </div>
   </div>
   <script>
@@ -118,28 +131,27 @@
       preds += `<p><strong>Tamaño:</strong> ${size} hectáreas</p>`;
       preds += `<p><strong>Mes y Año:</strong> ${month} ${year}</p>`;
       preds += `<p><strong>Tipo de Riego:</strong> ${irrigation.charAt(0).toUpperCase() + irrigation.slice(1)}</p>`;
-      preds += `<p><strong>Ubicación (Coordenadas):</strong> ${location}</p>`;
-      preds += '<h3 class="text-xl font-semibold mt-4">Predicciones y Recomendaciones:</h3>';
+      preds += `<p><strong>Ubicación:</strong> ${location}</p>`;
+      preds += '<h3 class="text-xl font-semibold mt-4">Predicciones y Recomendaciones Detalladas</h3>';
 
-      // Simulación de datos históricos y tendencias climáticas
+      // Datos históricos simulados
       const historicalTrends = {
-        'maíz': { optimalTemp: [20, 30], rainfall: [500, 800], riskYears: [2027, 2030] },
-        'trigo': { optimalTemp: [15, 25], rainfall: [300, 500], riskYears: [2028, 2031] },
-        'arroz': { optimalTemp: [20, 35], rainfall: [1000, 2000], riskYears: [2026, 2029] }
+        'maíz': { optimalTemp: [20, 30], rainfall: [500, 800], riskYears: [2027, 2030], altCrops: ['quinoa', 'frijol'] },
+        'trigo': { optimalTemp: [15, 25], rainfall: [300, 500], riskYears: [2028, 2031], altCrops: ['cebada', 'avena'] },
+        'arroz': { optimalTemp: [20, 35], rainfall: [1000, 2000], riskYears: [2026, 2029], altCrops: ['caña', 'yuca'] }
       };
-      const cropData = historicalTrends[crop] || { optimalTemp: [15, 30], rainfall: [400, 1000], riskYears: [] };
+      const cropData = historicalTrends[crop] || { optimalTemp: [15, 30], rainfall: [400, 1000], riskYears: [], altCrops: ['quinoa', 'papa'] };
 
       // Pronóstico multianual
-      const currentYear = new Date().getFullYear(); // 2025
       const yearsToPredict = [year, year + 1, year + 2];
       let multiYearForecast = '<h4 class="text-lg font-medium mt-2">Pronóstico Multianual:</h4><ul>';
       yearsToPredict.forEach(y => {
         const isRiskYear = cropData.riskYears.includes(y);
-        multiYearForecast += `<li>${y}: ${isRiskYear ? 'Alto riesgo de bajo rendimiento por condiciones históricas adversas' : 'Condiciones potencialmente favorables'}.</li>`;
+        multiYearForecast += `<li>${y}: ${isRiskYear ? 'Alto riesgo de bajo rendimiento por condiciones adversas' : 'Condiciones potencialmente favorables'}.</li>`;
       });
       multiYearForecast += '</ul>';
 
-      // Clima estimado basado en mes y altitud (Chimborazo, ~2000-4000 m)
+      // Clima estimado
       const warmMonths = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto'];
       const coolMonths = ['Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero'];
       let climateNote = '';
@@ -149,28 +161,32 @@
         climateNote = '<p>- <strong>Clima:</strong> Fresco (10-20°C). Riesgo de heladas en altitudes altas.</p>';
       }
 
-      // Recomendaciones detalladas
-      let recommendations = '<h4 class="text-lg font-medium mt-2">Recomendaciones:</h4><ul>';
-      recommendations += `<li>${size > 5 ? 'Rotación de cultivos recomendada para >5 ha para preservar el suelo.' : 'Terreno pequeño, ideal para cultivos intensivos.'}</li>`;
+      // Recomendaciones ampliadas
+      let recommendations = '<h4 class="text-lg font-medium mt-2">Recomendaciones Detalladas:</h4><ul>';
+      recommendations += `<li><strong>Preparación del Suelo:</strong> ${size > 5 ? 'Arado profundo y rotación con leguminosas.' : 'Labranza mínima para conservar humedad.'}</li>`;
+      recommendations += `<li><strong>Siembra:</strong> Siembra directa o trasplante según ${crop}; usa semillas certificadas.</li>`;
       if (irrigation === 'manual') {
-        recommendations += '<li>Riego manual limitado; considera sistemas automatizados para >2 ha.</li>';
+        recommendations += '<li><strong>Riego:</strong> Manual limitado; ideal <2 ha. Considera goteo para eficiencia.</li>';
       } else if (irrigation === 'goteo') {
-        recommendations += '<li>Riego por goteo: Usa fertilizantes solubles y revisa emisores semanalmente.</li>';
+        recommendations += '<li><strong>Riego:</strong> Goteo óptimo; aplica fertilizantes solubles y revisa emisores.</li>';
       } else if (irrigation === 'aspersión') {
-        recommendations += '<li>Riego por aspersión: Ajusta aspersores para cubrir uniformemente.</li>';
+        recommendations += '<li><strong>Riego:</strong> Aspersión; ajusta cobertura y evita exceso de agua.</li>';
       } else if (irrigation === 'gravedad') {
-        recommendations += '<li>Riego por gravedad: Verifica pendiente adecuada en el terreno.</li>';
+        recommendations += '<li><strong>Riego:</strong> Gravedad; asegura pendiente adecuada y canales limpios.</li>';
       }
-      recommendations += `<li>Fertilizantes: Nitrógeno (N) y fósforo (P) para ${crop}; analiza el suelo local.</li>`;
+      recommendations += `<li><strong>Fertilizantes:</strong> Nitrógeno (N) y fósforo (P); analiza suelo para dosis exacta.</li>`;
+      recommendations += `<li><strong>Control de Plagas:</strong> Monitorea con trampas y usa biopesticidas si es necesario.</li>`;
+      recommendations += `<li><strong>Cosecha:</strong> Planifica recolección en seco; usa maquinaria si >5 ha.</li>`;
+      recommendations += `<li><strong>Almacenamiento:</strong> Secado adecuado y silos protegidos contra humedad.</li>`;
       if (cropData.riskYears.includes(year)) {
-        recommendations += `<li><strong>Advertencia:</strong> ${year} tiene historial de condiciones adversas (sequías/excesos). Considera quinoa o papa.</li>`;
+        recommendations += `<li><strong>Advertencia:</strong> ${year} es riesgoso para ${crop}. Recomendamos ${cropData.altCrops.join(' o ')} como alternativas.</li>`;
       } else {
-        recommendations += `<li>Buen año para ${crop} si lluvia está entre ${cropData.rainfall[0]}-${cropData.rainfall[1]} mm.</li>`;
+        recommendations += `<li><strong>Viabilidad:</strong> Buen año para ${crop} si lluvia está entre ${cropData.rainfall[0]}-${cropData.rainfall[1]} mm.</li>`;
       }
-      recommendations += '<li>Usa sensores de humedad y drones para optimizar riego y detectar plagas.</li>';
+      recommendations += '<li><strong>Tecnología:</strong> Sensores de humedad y drones para optimizar riego y detectar plagas.</li>';
       recommendations += '</ul>';
 
-      // Integración de Gemini con tu API key
+      // Integración de Gemini
       let geminiResponse = '';
       fetch('https://api.gemini.google.com/v1/models/yield-prediction?key=AIzaSyCAjD0u4CztKbe3v3A-gR-95IoSilp7BhQ', {
         method: 'POST',
