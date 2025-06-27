@@ -3,96 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recomendaciones Agrícolas</title>
+  <title>Agroweb - Predicciones Agrícolas</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body {
+      background-image: url('activos/fondo.png'); /* Usando tu archivo fondo.png */
+      background-size: cover;
+      background-attachment: fixed;
+      background-position: center;
+    }
+    #map { height: 300px; width: 100%; }
+    .container { background-color: rgba(255, 255, 255, 0.9); } /* Fondo semitransparente para legibilidad */
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="font-sans">
   <div class="container mx-auto p-6">
-    <h1 class="text-3xl font-bold text-center mb-6">Recomendaciones Agrícolas</h1>
+    <div class="text-center mb-6">
+      <img src="activos/ESPOCH.png" alt="Logo ESPOCH" class="mx-auto h-24"> <!-- Usando tu archivo ESPOCH.png -->
+      <h1 class="text-4xl font-bold text-green-800">Agroweb</h1>
+      <p class="text-lg text-gray-700">Predicciones Agrícolas - Escuela Superior Politécnica de Chimborazo</p>
+      <p class="text-md text-gray-600">Facultad de Mecánica</p>
+    </div>
     <div class="bg-white p-6 rounded-lg shadow-md max-w-lg mx-auto">
       <form id="farmForm" onsubmit="handleSubmit(event)">
         <div class="mb-4">
           <label for="crop" class="block text-gray-700">Tipo de Cultivo</label>
-          <select id="crop" class="w-full p-2 border rounded" required>
-            <option value="">Selecciona un cultivo</option>
-            <option value="maiz">Maíz</option>
-            <option value="trigo">Trigo</option>
-            <option value="frijol">Frijol</option>
-            <option value="tomate">Tomate</option>
-          </select>
+          <input type="text" id="crop" class="w-full p-2 border rounded" placeholder="Ej: Maíz, Trigo" required>
         </div>
         <div class="mb-4">
           <label for="size" class="block text-gray-700">Tamaño del Terreno (hectáreas)</label>
           <input type="number" id="size" step="0.1" min="0.1" class="w-full p-2 border rounded" required>
         </div>
         <div class="mb-4">
-          <label for="year" class="block text-gray-700">Año de Siembra</label>
-          <input type="number" id="year" min="2000" max="2025" class="w-full p-2 border rounded" required>
+          <label for="month" class="block text-gray-700">Mes de Siembra</label>
+          <select id="month" class="w-full p-2 border rounded" required>
+            <option value="">Selecciona un mes</option>
+            <option value="Enero">Enero</option>
+            <option value="Febrero">Febrero</option>
+            <option value="Marzo">Marzo</option>
+            <option value="Abril">Abril</option>
+            <option value="Mayo">Mayo</option>
+            <option value="Junio">Junio</option>
+            <option value="Julio">Julio</option>
+            <option value="Agosto">Agosto</option>
+            <option value="Septiembre">Septiembre</option>
+            <option value="Octubre">Octubre</option>
+            <option value="Noviembre">Noviembre</option>
+            <option value="Diciembre">Diciembre</option>
+          </select>
         </div>
         <div class="mb-4">
-          <label for="location" class="block text-gray-700">Ubicación</label>
-          <input type="text" id="location" class="w-full p-2 border rounded" placeholder="Ej: Bogotá, Colombia" required>
+          <label for="year" class="block text-gray-700">Año de Siembra</label>
+          <input type="number" id="year" min="2026" class="w-full p-2 border rounded" required>
         </div>
-        <button type="submit" class="w-full bg-green-600 text-white p-2 rounded hover:bg-green-700">Obtener Recomendaciones</button>
+        <div class="mb-4">
+          <label for="irrigation" class="block text-gray-700">Tipo de Riego</label>
+          <select id="irrigation" class="w-full p-2 border rounded" required>
+            <option value="">Selecciona un tipo de riego</option>
+            <option value="goteo">Riego por goteo</option>
+            <option value="aspersión">Riego por aspersión</option>
+            <option value="gravedad">Riego por gravedad</option>
+            <option value="manual">Riego manual</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label for="location" class="block text-gray-700">Ubicación (haz clic en el mapa)</label>
+          <input type="text" id="location" class="w-full p-2 border rounded" readonly placeholder="Coordenadas aparecerán aquí">
+          <div id="map" class="mt-2"></div>
+        </div>
+        <button type="submit" class="w-full bg-green-800 text-white p-2 rounded hover:bg-green-700">Obtener Predicciones</button>
       </form>
-      <div id="recommendations" class="mt-6 hidden">
-        <h2 class="text-2xl font-semibold mb-4">Recomendaciones</h2>
-        <div id="recContent" class="text-gray-700"></div>
+      <div id="predictions" class="mt-6 hidden">
+        <h2 class="text-2xl font-semibold mb-4">Predicciones</h2>
+        <div id="predContent" class="text-gray-700"></div>
       </div>
     </div>
   </div>
   <script>
+    // Inicializar el mapa con Leaflet
+    const map = L.map('map').setView([-1.6636, -78.6546], 8); // Centrado en Chimborazo, Ecuador
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+
+    let marker;
+    map.on('click', function(e) {
+      const lat = e.latlng.lat.toFixed(4);
+      const lng = e.latlng.lng.toFixed(4);
+      document.getElementById('location').value = `${lat}, ${lng}`;
+      if (marker) map.removeLayer(marker);
+      marker = L.marker([lat, lng]).addTo(map);
+    });
+
     function handleSubmit(event) {
       event.preventDefault();
-      const crop = document.getElementById('crop').value;
+      const crop = document.getElementById('crop').value.trim();
       const size = parseFloat(document.getElementById('size').value);
+      const month = document.getElementById('month').value;
       const year = parseInt(document.getElementById('year').value);
+      const irrigation = document.getElementById('irrigation').value;
       const location = document.getElementById('location').value;
-      
-      const recommendations = generateRecommendations(crop, size, year, location);
-      const recDiv = document.getElementById('recommendations');
-      const recContent = document.getElementById('recContent');
-      recContent.innerHTML = recommendations;
-      recDiv.classList.remove('hidden');
+
+      const predictions = generatePredictions(crop, size, month, year, irrigation, location);
+      const predDiv = document.getElementById('predictions');
+      const predContent = document.getElementById('predContent');
+      predContent.innerHTML = predictions;
+      predDiv.classList.remove('hidden');
     }
 
-    function generateRecommendations(crop, size, year, location) {
-      let recs = `<p><strong>Cultivo:</strong> ${crop.charAt(0).toUpperCase() + crop.slice(1)}</p>`;
-      recs += `<p><strong>Tamaño:</strong> ${size} hectáreas</p>`;
-      recs += `<p><strong>Año:</strong> ${year}</p>`;
-      recs += `<p><strong>Ubicación:</strong> ${location}</p>`;
-      recs += '<h3 class="text-xl font-semibold mt-4">Recomendaciones:</h3>';
+    function generatePredictions(crop, size, month, year, irrigation, location) {
+      let preds = `<p><strong>Cultivo:</strong> ${crop}</p>`;
+      preds += `<p><strong>Tamaño:</strong> ${size} hectáreas</p>`;
+      preds += `<p><strong>Mes y Año:</strong> ${month} ${year}</p>`;
+      preds += `<p><strong>Tipo de Riego:</strong> ${irrigation.charAt(0).toUpperCase() + irrigation.slice(1)}</p>`;
+      preds += `<p><strong>Ubicación (Coordenadas):</strong> ${location}</p>`;
+      preds += '<h3 class="text-xl font-semibold mt-4">Predicciones para la Siembra:</h3>';
+
+      const warmMonths = ['Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto'];
+      const coolMonths = ['Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Enero', 'Febrero'];
       
-      switch(crop) {
-        case 'maiz':
-          recs += `<p>- <strong>Temperatura ideal:</strong> 20-30°C. Asegúrate de sembrar en primavera para evitar heladas.</p>`;
-          recs += `<p>- <strong>Época de siembra:</strong> Marzo-Mayo en ${location} (ajusta según clima local).</p>`;
-          recs += `<p>- <strong>Riego:</strong> Mantén el suelo húmedo, especialmente en floración.</p>`;
-          recs += `<p>- <strong>Espaciamiento:</strong> 75 cm entre hileras y 25 cm entre plantas para ${size} hectáreas.</p>`;
-          break;
-        case 'trigo':
-          recs += `<p>- <strong>Temperatura ideal:</strong> 15-25°C. Prefiere climas frescos.</p>`;
-          recs += `<p>- <strong>Época de siembra:</strong> Octubre-Noviembre en ${location}.</p>`;
-          recs += `<p>- <strong>Riego:</strong> Moderado, evita encharcamientos.</p>`;
-          recs += `<p>- <strong>Espaciamiento:</strong> 20 cm entre hileras para ${size} hectáreas.</p>`;
-          break;
-        case 'frijol':
-          recs += `<p>- <strong>Temperatura ideal:</strong> 18-25°C. Evita temperaturas extremas.</p>`;
-          recs += `<p>- <strong>Época de siembra:</strong> Abril-Junio en ${location}.</p>`;
-          recs += `<p>- <strong>Riego:</strong> Regular, especialmente durante la formación de vainas.</p>`;
-          recs += `<p>- <strong>Espaciamiento:</strong> 50 cm entre hileras y 10 cm entre plantas.</p>`;
-          break;
-        case 'tomate':
-          recs += `<p>- <strong>Temperatura ideal:</strong> 20-27°C. Protege de heladas.</p>`;
-          recs += `<p>- <strong>Época de siembra:</strong> Febrero-Abril en ${location}.</p>`;
-          recs += `<p>- <strong>Riego:</strong> Constante pero sin encharcar.</p>`;
-          recs += `<p>- <strong>Espaciamiento:</strong> 60 cm entre plantas para ${size} hectáreas.</p>`;
-          break;
-        default:
-          recs += `<p>No hay recomendaciones específicas para este cultivo.</p>`;
+      if (warmMonths.includes(month)) {
+        preds += `<p>- <strong>Clima esperado:</strong> Probablemente cálido en ${month} ${year}. Asegúrate de monitorear temperaturas altas en las coordenadas ${location}.</p>`;
+      } else if (coolMonths.includes(month)) {
+        preds += `<p>- <strong>Clima esperado:</strong> Probablemente fresco en ${month} ${year}. Considera proteger el cultivo de posibles heladas en ${location}.</p>`;
       }
-      recs += `<p><strong>Nota:</strong> Las recomendaciones son generales. Consulta con un agrónomo local en ${location} para detalles específicos.</p>`;
-      return recs;
+
+      switch (irrigation) {
+        case 'goteo':
+          preds += `<p>- <strong>Riego:</strong> El riego por goteo es eficiente para ${size} hectáreas. Planifica un sistema con tuberías bien distribuidas y revisa el suministro de agua para ${month} ${year}.</p>`;
+          break;
+        case 'aspersión':
+          preds += `<p>- <strong>Riego:</strong> El riego por aspersión es adecuado, pero asegúrate de ajustar los aspersores para cubrir uniformemente ${size} hectáreas.</p>`;
+          break;
+        case 'gravedad':
+          preds += `<p>- <strong>Riego:</strong> El riego por gravedad es económico, pero verifica que el terreno en ${location} tenga la pendiente adecuada.</p>`;
+          break;
+        case 'manual':
+          preds += `<p>- <strong>Riego:</strong> El riego manual puede ser viable para terrenos pequeños (${size} hectáreas), pero planifica suficiente mano de obra para ${month} ${year}.</p>`;
+          break;
+      }
+
+      preds += `<p>- <strong>Tecnología:</strong> Considera el uso de sensores de humedad y drones para monitorear ${crop} en ${location}, optimizando el riego y la planificación para ${month} ${year}.</p>`;
+      preds += `<p>- <strong>Nota:</strong> Estas predicciones son generales, ya que los datos climáticos para ${year} no están disponibles. Consulta con un agrónomo de la ESPOCH para ajustes específicos.</p>`;
+      
+      return preds;
     }
   </script>
 </body>
